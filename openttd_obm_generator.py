@@ -50,9 +50,9 @@ class OBM_File(object):
             elif i < 11:
                 prefix = 'old_' + str(i-1)
             elif i < 21:
-                prefix = 'new_' + str(i-1 % 10)
+                prefix = 'new_' + str((i-1) % 10)
             else:
-                prefix = 'ezy_' + str(i-1 % 10)
+                prefix = 'ezy_' + str((i-1) % 10)
             prefix += ' = '
             obm_files_text.append(prefix + track)
             obm_md5s_text.append(track + ' = ' + self.md5(track))
@@ -60,15 +60,15 @@ class OBM_File(object):
             obm_names_text.append(track + ' = ' + ' '.join(track[3:-4].split('_')).title())
         if len(obm_files_text) - 1 < 31:
             start = len(obm_files_text) - 1
-            for i in range(start, 33):
+            for i in range(start, 31):
                 if i == 0:
                     prefix = 'theme'
                 elif i < 11:
                     prefix = 'old_' + str(i-1)
                 elif i < 21:
-                    prefix = 'new_' + str(i-1 % 10)
+                    prefix = 'new_' + str((i-1) % 10)
                 else:
-                    prefix = 'ezy_' + str(i-1 % 10)
+                    prefix = 'ezy_' + str((i-1) % 10)
                 prefix += ' = '
                 obm_files_text.append(prefix)
         file_obj.write('\n'.join(obm_files_text))
