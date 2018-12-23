@@ -1,4 +1,4 @@
-#! python3
+# ! python3
 ## openttd_obm_generator.py
 ## Generates a .obm file for use by OpenTTD from a directory
 ## Brett Behler 12.20.2018
@@ -19,47 +19,31 @@ class OBM_File(object):
     def read_directory(self):
         # get list of valid midi files in current directory
         self.name = os.path.split(os.getcwd())[-1]
-        self.tracks = [f for f in os.listdir('.') if os.path.isfile(f) and f[-4:] == '.mid']
+        i = 0
+        self.obm_files_text = ['[files]']
+        self.obm_md5s_text = ['[md5s]']
+        self.obm_names_text = ['[names]']
 
-
-    def create_file(self):
-        with open(self.name+'.obm', 'w') as obm_file:
-            self.write_obm_metadata(obm_file)
-            self.write_obm_data(obm_file)
-
-
-    def write_obm_metadata(self, file_obj):
-        text = [
-                '[metadata]', 
-                'name = ' + self.name,
-                'shortname = '+ self.name[:4].upper(),
-                'version = *',
-                'description = *',
-                '\n'
-                ]
-        file_obj.write('\n'.join(text))
-
-    def write_obm_data(self, file_obj):
-        obm_files_text = ['[files]']
-        obm_md5s_text = ['[md5s]']
-        obm_names_text = ['[names]']
-        for track in self.tracks:
-            i = self.tracks.index(track)
-            if i == 0:
-                prefix = 'theme'
-            elif i < 11:
-                prefix = 'old_' + str(i-1)
-            elif i < 21:
-                prefix = 'new_' + str((i-1) % 10)
-            else:
-                prefix = 'ezy_' + str((i-1) % 10)
-            prefix += ' = '
-            obm_files_text.append(prefix + track)
-            obm_md5s_text.append(track + ' = ' + self.md5(track))
-            # file naming convention XX_track_title_name.mid where XX is the numerical track number
-            obm_names_text.append(track + ' = ' + ' '.join(track[3:-4].split('_')).title())
-        if len(obm_files_text) - 1 < 31:
-            start = len(obm_files_text) - 1
+        for f in os.listdir('.'):
+            if os.path.isfile(f) and f[-4:] == '.mid' or f[-5:] == '.midi':
+                extension = os.path.splitext(f)[1]
+                if i == 0:
+                    prefix = 'theme'
+                elif i < 11:
+                    prefix = 'old_' + str(i-1)
+                elif i < 21:
+                    prefix = 'new_' + str((i-1) % 10)
+                else:
+                    prefix = 'ezy_' + str((i-1) % 10)
+                prefix += ' = '
+                self.obm_files_text.append(prefix + f)
+                self.obm_md5s_text.append(f + ' = ' + self.md5(f))
+                # file naming convention XX_track_title_name.mid where XX is the numerical track number
+                self.obm_names_text.append(f + ' = ' + ' '.join(f[3:-len(extension)].split('_')).title())
+                i += 1
+        # if the [files] section is shorter than the required 31 tracks, finish the [files] section.
+        if len(self.obm_files_text) - 1 < 31:
+            start = len(self.obm_files_text) - 1
             for i in range(start, 31):
                 if i == 0:
                     prefix = 'theme'
@@ -70,14 +54,27 @@ class OBM_File(object):
                 else:
                     prefix = 'ezy_' + str((i-1) % 10)
                 prefix += ' = '
-                obm_files_text.append(prefix)
-        file_obj.write('\n'.join(obm_files_text))
-        file_obj.write('\n\n')
-        file_obj.write('\n'.join(obm_md5s_text))
-        file_obj.write('\n\n')
-        file_obj.write('\n'.join(obm_names_text))
-        file_obj.write('\n\n')
-        file_obj.write('\n'.join(['[origin]', 'default = *']))
+                self.obm_files_text.append(prefix)
+
+
+    def create_file(self):
+        with open(self.name+'.obm', 'w') as obm_file:
+            text = [
+                '[metadata]', 
+                'name = ' + self.name,
+                'shortname = '+ self.name[:4].upper(),
+                'version = *',
+                'description = *',
+                '\n'
+                ]
+            obm_file.write('\n'.join(text))
+            obm_file.write('\n'.join(self.obm_files_text))
+            obm_file.write('\n\n')
+            obm_file.write('\n'.join(self.obm_md5s_text))
+            obm_file.write('\n\n')
+            obm_file.write('\n'.join(self.obm_names_text))
+            obm_file.write('\n\n')
+            obm_file.write('\n'.join(['[origin]', 'default = *']))
 
 if __name__ == '__main__':
     gen_obm = OBM_File()
