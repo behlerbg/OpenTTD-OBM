@@ -3,11 +3,35 @@
 ## Generates a .obm file for use by OpenTTD from a directory
 ## Brett Behler 12.20.2018
 
-import hashlib, os
+import hashlib
+import os
 
-class OBM_File(object):
-    def __init__(self):
-        self.read_directory()
+class OBMData(object):
+    def __init__(self, 
+        name='New OBM', 
+        shortname='XXXX', 
+        version='*', 
+        description='*', 
+        origin='*'
+    ):
+        # self.read_directory()
+        self.meta_data = {
+            'name':name, 
+            'shortname':shortname,
+            'version':version,
+            'description':description,
+            'origin':origin
+        }
+        self.theme = ''
+        self.old_style = []
+        self.new_style = []
+        self.ezy_street = []
+
+    def write_lists(self, theme, old, new, ezy):
+        self.theme = theme
+        self.old_style = old
+        self.new_style = new
+        self.ezy_street = ezy
 
     def md5(self, fname):
         hash_md5 = hashlib.md5()
@@ -77,5 +101,5 @@ class OBM_File(object):
             obm_file.write('\n'.join(['[origin]', 'default = *']))
 
 if __name__ == '__main__':
-    gen_obm = OBM_File()
+    gen_obm = OBMData()
     gen_obm.create_file()
