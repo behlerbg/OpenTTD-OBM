@@ -97,9 +97,12 @@ class OBMApp(tk.Tk):
         self.openttd_dir = ''
         self.obm_data = None
         self.has_saved = False
+        self.cur_style = None
+        self.cur_track = None
 
         self.container = tk.Frame(self)
         self.container.pack(side='top', fill='both', expand=True)
+        self.container.grid(row=0, column=0, sticky='NSEW')
 
         self.create_widgets()
 
@@ -121,9 +124,47 @@ class OBMApp(tk.Tk):
 
         tk.Tk.config(self, menu=menubar)
 
-        # Button Configuration
+        # Metadata Configuration
 
-        # Textbox Configuration
+        tk.Label(self, text='OBM Metadata').grid(row=0, column=0, sticky='NW', padx=5, pady=4)
+
+        tk.Label(self, text='Name:').grid(row=1, column=0, sticky='NW', padx=5, pady=1)
+        self.meta_name = tk.Entry(self)
+        self.meta_name.grid(row=1, column=1, columnspan=3, sticky='NEW')
+        self.meta_name.insert(0, 'Music Pack Name')
+
+        tk.Label(self, text='Shortname:').grid(row=2, column=0, sticky='NW', padx=5, pady=1)
+        self.meta_shortname = tk.Entry(self)
+        self.meta_shortname.grid(row=2, column=1, columnspan=3, sticky='NEW')
+        self.meta_shortname.insert(0, 'XXXX')
+
+        tk.Label(self, text='Version:').grid(row=3, column=0, sticky='NW', padx=5, pady=1)
+        self.meta_version = tk.Entry(self)
+        self.meta_version.grid(row=3, column=1, columnspan=3, sticky='NEW')
+        self.meta_version.insert(0, '0.0.1')
+
+        tk.Label(self, text='Description:').grid(row=4, column=0, sticky='NW', padx=5, pady=1)
+        self.meta_description = tk.Entry(self)
+        self.meta_description.grid(row=4, column=1, columnspan=3, sticky='NEW')
+        self.meta_description.insert(0, 'A short description for the music pack')
+
+        tk.Label(self, text='Origin:').grid(row=5, column=0, sticky='NW', padx=5, pady=1)
+        self.meta_origin = tk.Entry(self)
+        self.meta_origin.grid(row=5, column=1, columnspan=3, sticky='NEW')
+        self.meta_origin.insert(0, 'https://')
+
+
+        # Midifile Configuration
+        tk.Label(self, text='Track Information: ').grid(row=6, column=0, sticky='NW', padx=5, pady=4)
+        self.track_label = tk.Label(self)
+        self.track_label.grid(row=6, column=1, columnspan=3, sticky='NEW')
+
+        tk.Label(self, text='Name:').grid(row=7, column=0, padx=5, pady=1, sticky='NW')
+        self.track_name = tk.Entry(self)
+        self.track_name.grid(row=7, column=1, columnspan=3, sticky='NEW')
+        self.track_name.insert(0, 'Name of current track')
+
+        # Style Configuration
 
     def set_obm(self, *args, **kwargs):
         self.obm_data = obm.OBMData(*args, **kwargs)
