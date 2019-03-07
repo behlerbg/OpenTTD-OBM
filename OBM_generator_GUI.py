@@ -10,24 +10,14 @@ import os
 
 # Global Variables
 
-LARGE_FONT = ('fixedsys', 12)
+LARGE_FONT = ('fixedsys', 14)
 MEDIUM_FONT = ('fixedsys', 10)
-SMALL_FONT = ('fixedsys', 8)
+SMALL_FONT = ('fixedsys', 6)
 GREY = '#838582'
 BLACK = '#101010'
 BLUE = '#a0c2de'
 
 # Event Commands
-
-
-def add_track(track, style):
-    pass
-    # add track to style list
-
-
-def remove_track(track, style):
-    pass
-    # remove track from style list
 
 
 def clear_style(style):
@@ -240,11 +230,17 @@ class OBMApp(tk.Tk):
                 font=SMALL_FONT)
         self.track_listbox.grid(row=9, column=0, columnspan=2, rowspan=8,
                 sticky='NSEW', padx=5)
+        self.track_listbox.bind("<<ListboxSelect>>", func=self.track_text,
+                add=True)
+        self.track_listbox.bind("<Double-Button-1>", self.add_track, False)
 
         self.style_listbox = tk.Listbox(self, bg=BLACK, fg=BLUE, width=40,
                 font=SMALL_FONT)
         self.style_listbox.grid(row=9, column=3, columnspan=2, rowspan=8,
                 sticky='NSEW', padx=5)
+        self.style_listbox.bind("<<ListboxSelect>>", func=self.track_text,
+                add=True)
+        self.style_listbox.bind("<Double-Button-1>", self.remove_track, False)
 
         self.theme_btn = tk.Button(self, text='THEME',
                 command=lambda: self.switch_style('theme'), width=15,
@@ -268,11 +264,11 @@ class OBMApp(tk.Tk):
 
         tk.Label(self, text='', bg=GREY).grid(row=13, column=2, sticky='NSEW')
 
-        self.add_btn = tk.Button(self, text='ADD >>', command=add_track,
+        self.add_btn = tk.Button(self, text='ADD >>', command=self.add_track,
                 width=15, font=SMALL_FONT, bg=GREY, fg=BLACK)
         self.add_btn.grid(row=14, column=2, sticky='NSEW', padx=10, pady=10)
 
-        self.ezy_btn = tk.Button(self, text='<< REMOVE', command=remove_track,
+        self.ezy_btn = tk.Button(self, text='<< REMOVE', command=self.remove_track,
                 width=15, font=SMALL_FONT, bg=GREY, fg=BLACK)
         self.ezy_btn.grid(row=15, column=2, sticky='NSEW', padx=10, pady=10)
 
@@ -283,6 +279,14 @@ class OBMApp(tk.Tk):
         self.save_btn = tk.Button(self, text='SAVE OBM', command=save_obm,
                 width=15, font=SMALL_FONT, bg=GREY, fg=BLACK)
         self.save_btn.grid(row=17, column=4, sticky='SE', padx=5, pady=10)
+
+    def track_text(self, *args):
+        if self.track_listbox.curselection():
+            self.track_label['text'] = self.track_list[
+                self.track_listbox.curselection()[0]]
+        elif self.style_listbox.curselection():
+            self.track_label['text'] = self.style_list[
+                self.style_listbox.curselection()[0]]
 
     def limit_shortname(self, *args):
         """Set shortname_val to four characters. Capitalize letters."""
@@ -307,7 +311,7 @@ class OBMApp(tk.Tk):
             self.style_list = self.obm_data.ezy_street
             self.style_label['text'] = '"EZY STREET"'
         elif style == 'theme':
-            self.stlye_list = self.obm_data.theme
+            self.style_list = self.obm_data.theme
             self.style_label['text'] = '"THEME"'
         self.update()
 
@@ -322,6 +326,44 @@ class OBMApp(tk.Tk):
                 self.track_list.append(f)
         self.update()
 
+    def add_track(self, *args):
+        if self.track_listbox.curselection():
+            track = self.track_list[self.track_listbox.curselection()[0]]
+        else:
+            return
+        if self.cur_style == 'old' and len(self.style_list) < 10:
+            self.obm_data.old_style.append(track)
+            self.style_list = self.obm_data.old_style
+        elif self.cur_style == 'new' and len(self.style_list) < 10:
+            self.obm_data.new_style.append(track)
+            self.style_list = self.obm_data.new_style
+        elif self.cur_style == 'ezy' and len(self.style_list) < 10:
+            self.obm_data.ezy_street.append(track)
+            self.style_list = self.obm_data.ezy_street
+        elif self.cur_style == 'theme' and len(self.style_list) < 1:
+            self.obm_data.theme.append(track)
+            self.style_list = self.obm_data.theme
+        self.update()
+
+    def remove_track(self, *args):
+        if self.style_listbox.curselection():
+            track = self.style_list[self.style_listbox.curselection()[0]]
+        else:
+            return
+        if self.cur_style == 'old':
+            self.obm_data.old_style.remove(track)
+            self.style_list = self.obm_data.old_style
+        elif self.cur_style == 'new':
+            self.obm_data.new_style.remove(track)
+            self.style_list = self.obm_data.new_style
+        elif self.cur_style == 'ezy':
+            self.obm_data.ezy_street.remove(track)
+            self.style_list = self.obm_data.ezy_street
+        elif self.cur_style == 'theme':
+            self.obm_data.theme.remove(track)
+            self.style_list = self.obm_data.theme
+        self.update()
+
     def update(self):
         """Update self.track_listbox and self.style_listbox to new values."""
         self.track_listbox.delete(0, tk.END)
@@ -334,5 +376,4 @@ class OBMApp(tk.Tk):
 
 if __name__ == '__main__':
     app = OBMApp()
-    app.geometry('752x600')
     app.mainloop()
