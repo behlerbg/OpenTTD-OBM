@@ -22,7 +22,7 @@ class OBMData(object):
             'description':description,
             'origin':origin
         }
-        self.theme = ''
+        self.theme = []
         self.old_style = []
         self.new_style = []
         self.ezy_street = []
