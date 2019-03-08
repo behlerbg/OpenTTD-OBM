@@ -16,17 +16,23 @@ SMALL_FONT = ('fixedsys', 6)
 GREY = '#838582'
 BLACK = '#101010'
 BLUE = '#a0c2de'
+RED = '#e60005'
+YELLOW = '#e4b908'
+LIGHT_YELLOW = '#faf36f'
 
 # Event Commands
 
 
-def clear_style(style):
-    pass
-
-
 def popupmessage(message):
-    pass
-    # display popup window with relevant error information
+    popup = tk.Tk()
+    popup.configure(bg=RED)
+    popup.wm_title('Information')
+    label = tk.Label(popup, text=message, font=MEDIUM_FONT)
+    label.configure(bg=RED, fg=LIGHT_YELLOW)
+    label.pack(side='top', fill='x', pady=20, padx=30)
+    B1 = tk.Button(popup, text='OK', command=popup.destroy)
+    B1.configure(bg=YELLOW, fg=BLACK, font=SMALL_FONT, width=10)
+    B1.pack(side='right', padx=10, pady=10)
 
 
 def new_obm():
@@ -272,7 +278,7 @@ class OBMApp(tk.Tk):
                 width=15, font=SMALL_FONT, bg=GREY, fg=BLACK)
         self.ezy_btn.grid(row=15, column=2, sticky='NSEW', padx=10, pady=10)
 
-        self.ezy_btn = tk.Button(self, text='CLEAR', command=clear_style,
+        self.ezy_btn = tk.Button(self, text='CLEAR', command=self.clear_style,
                 width=15, font=SMALL_FONT, bg=GREY, fg=BLACK)
         self.ezy_btn.grid(row=16, column=2, sticky='NSEW', padx=10, pady=10)
 
@@ -331,18 +337,19 @@ class OBMApp(tk.Tk):
             track = self.track_list[self.track_listbox.curselection()[0]]
         else:
             return
-        if self.cur_style == 'old' and len(self.style_list) < 10:
+        if ((self.cur_style in ['old', 'new', 'ezy']
+                and len(self.style_list) >= 10)
+                or (self.cur_style == 'theme' and len(self.style_list) >= 1)):
+                    popupmessage('Current style full.')
+                    return
+        if self.cur_style == 'old':
             self.obm_data.old_style.append(track)
-            self.style_list = self.obm_data.old_style
-        elif self.cur_style == 'new' and len(self.style_list) < 10:
+        elif self.cur_style == 'new':
             self.obm_data.new_style.append(track)
-            self.style_list = self.obm_data.new_style
-        elif self.cur_style == 'ezy' and len(self.style_list) < 10:
+        elif self.cur_style == 'ezy':
             self.obm_data.ezy_street.append(track)
-            self.style_list = self.obm_data.ezy_street
-        elif self.cur_style == 'theme' and len(self.style_list) < 1:
+        elif self.cur_style == 'theme':
             self.obm_data.theme.append(track)
-            self.style_list = self.obm_data.theme
         self.update()
 
     def remove_track(self, *args):
@@ -352,16 +359,23 @@ class OBMApp(tk.Tk):
             return
         if self.cur_style == 'old':
             self.obm_data.old_style.remove(track)
-            self.style_list = self.obm_data.old_style
         elif self.cur_style == 'new':
             self.obm_data.new_style.remove(track)
-            self.style_list = self.obm_data.new_style
         elif self.cur_style == 'ezy':
             self.obm_data.ezy_street.remove(track)
-            self.style_list = self.obm_data.ezy_street
         elif self.cur_style == 'theme':
             self.obm_data.theme.remove(track)
-            self.style_list = self.obm_data.theme
+        self.update()
+
+    def clear_style(self):
+        if self.cur_style == 'old':
+            self.obm_data.old_style.clear()
+        elif self.cur_style == 'new':
+            self.obm_data.new_style.clear()
+        elif self.cur_style == 'ezy':
+            self.obm_data.ezy_street.clear()
+        elif self.cur_style == 'theme':
+            self.obm_data.theme.clear()
         self.update()
 
     def update(self):
