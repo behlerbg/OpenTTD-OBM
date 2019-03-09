@@ -5,6 +5,7 @@
 
 import hashlib
 import os
+import shutil
 
 
 class OBMData(object):
@@ -50,26 +51,15 @@ class OBMData(object):
         self.old_style = []
         self.new_style = []
         self.ezy_street = []
+        self.tracks = []
+        self.music_dir = ''
+        self.destination_dir = ''
 
-    def write_lists(self, theme, old, new, ezy):
-        """Do this. Return that.
-        
-        Arguments:
-            
-        
-        Keyword Arguments:
-            
-        
-        Returns:
-            
-        
-        Raises:
-            
-        """
-        self.theme = theme
-        self.old_style = old
-        self.new_style = new
-        self.ezy_street = ezy
+    def combine_styles(self):
+        self.tracks.extend(self.theme)
+        self.tracks.extend(self.old_style)
+        self.tracks.extend(self.new_style)
+        self.tracks.extend(self.ezy_street)
 
     def md5(self, fname):
         """Do this. Return that.
@@ -92,7 +82,7 @@ class OBMData(object):
                 hash_md5.update(chunk)
         return hash_md5.hexdigest()
 
-    def read_directory(self):
+    def write_text(self):
         """Do this. Return that.
         
         Arguments:
@@ -107,49 +97,59 @@ class OBMData(object):
         Raises:
             
         """
-        # get list of valid midi files in current directory
-        self.name = os.path.split(os.getcwd())[-1]
-        i = 0
+        self.obm_meta_text = [
+                '[metadata]',
+                'name = ' + self.meta_data['name'],
+                'shortname = ' + self.meta_data['shortname'],
+                'version = ' + self.meta_data['version'],
+                'description = ' + self.meta_data['description'],
+                '\n']
         self.obm_files_text = ['[files]']
         self.obm_md5s_text = ['[md5s]']
         self.obm_names_text = ['[names]']
+        self.obm_origin_text = '[origin]\n' + self.meta_data['origin']
 
-        for f in os.listdir('.'):
-            if os.path.isfile(f) and f[-4:] == '.mid' or f[-5:] == '.midi':
-                extension = os.path.splitext(f)[1]
-                if i == 0:
-                    prefix = 'theme'
-                elif i < 11:
-                    prefix = 'old_' + str(i - 1)
-                elif i < 21:
-                    prefix = 'new_' + str((i - 1) % 10)
-                else:
-                    prefix = 'ezy_' + str((i - 1) % 10)
-                prefix += ' = '
-                self.obm_files_text.append(prefix + f)
-                self.obm_md5s_text.append(f + ' = ' + self.md5(f))
-                # file naming convention XX_track_title_name.mid where XX is
-                # the numerical track number
-                self.obm_names_text.append(f + ' = ' + ' '.join(
-                    f[3:-len(extension)].split('_')).title())
-                i += 1
-        # if the [files] section is shorter than the required 31 tracks, finish
-        # the [files] section.
-        if len(self.obm_files_text) - 1 < 31:
-            start = len(self.obm_files_text) - 1
-            for i in range(start, 31):
-                if i == 0:
-                    prefix = 'theme'
-                elif i < 11:
-                    prefix = 'old_' + str(i - 1)
-                elif i < 21:
-                    prefix = 'new_' + str((i - 1) % 10)
-                else:
-                    prefix = 'ezy_' + str((i - 1) % 10)
-                prefix += ' = '
-                self.obm_files_text.append(prefix)
+        for track in self.theme:
+            self.obm_files_text.append('theme = ' + track)
+            self.obm_md5s_text.append(track + ' = '
+                                     + self.md5(os.path.join(self.music_dir, 
+                                                             track)))
+            self.obm_names_text.append(track + ' = ' + track)
 
-    def create_file(self):
+        for i in range(10):
+            try:
+                track = self.old_style[i]
+                self.obm_files_text.append('old_' + str(i) + ' = ' + track)
+                self.obm_md5s_text.append(track + ' = '
+                                        + self.md5(os.path.join(self.music_dir, 
+                                                             track)))
+                self.obm_names_text.append(track + ' = ' + track)
+            except IndexError:
+                self.obm_files_text.append('old_' + str(i) + ' = ')
+
+        for i in range(10):
+            try:
+                track = self.new_style[i]
+                self.obm_files_text.append('new_' + str(i) + ' = ' + track)
+                self.obm_md5s_text.append(track + ' = '
+                                        + self.md5(os.path.join(self.music_dir, 
+                                                             track)))
+                self.obm_names_text.append(track + ' = ' + track)
+            except IndexError:
+                self.obm_files_text.append('new_' + str(i) + ' = ')
+
+        for i in range(10):
+            try:
+                track = self.ezy_street[i]
+                self.obm_files_text.append('ezy_' + str(i) + ' = ' + track)
+                self.obm_md5s_text.append(track + ' = '
+                                        + self.md5(os.path.join(self.music_dir, 
+                                                             track)))
+                self.obm_names_text.append(track + ' = ' + track)
+            except IndexError:
+                self.obm_files_text.append('ezy_' + str(i) + ' = ')
+
+    def create_file(self, obm_dir, music_dir):
         """Do this. Return that.
         
         Arguments:
@@ -164,22 +164,24 @@ class OBMData(object):
         Raises:
             
         """
-        with open(self.name + '.obm', 'w') as obm_file:
-            text = [
-                '[metadata]',
-                'name = ' + self.name,
-                'shortname = ' + self.name[:4].upper(),
-                'version = *',
-                'description = *',
-                '\n']
-            obm_file.write('\n'.join(text))
+        self.music_dir = music_dir
+        self.destination_dir = obm_dir
+        if obm_dir != music_dir:
+            self.combine_styles()
+            for track in self.tracks:
+                shutil.copy2(os.path.join(music_dir, track), obm_dir)
+        self.write_text()
+        with open(os.path.join(obm_dir, self.meta_data['name'] + '.obm'),
+                 'w') as obm_file:
+            obm_file.write('\n'.join(self.obm_meta_text))
             obm_file.write('\n'.join(self.obm_files_text))
             obm_file.write('\n\n')
             obm_file.write('\n'.join(self.obm_md5s_text))
             obm_file.write('\n\n')
             obm_file.write('\n'.join(self.obm_names_text))
             obm_file.write('\n\n')
-            obm_file.write('\n'.join(['[origin]', 'default = *']))
+            obm_file.write(self.obm_origin_text)
+
 
 if __name__ == '__main__':
     print('A class for tracking and formatting data into the OBM format.')
